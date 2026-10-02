@@ -1,0 +1,8 @@
+breakpoint set --name main
+breakpoint set --name task_restartable_ranges_register
+run
+thread backtrace -c 8
+continue
+continue
+thread backtrace -c 8
+continue
