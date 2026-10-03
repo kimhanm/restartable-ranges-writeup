@@ -3,6 +3,7 @@
 This chapter assumes the reader knows what restartable ranges are (in theory). It is concerned with guiding the reader through the process of getting them to work on release kernels.
 
 ## `00_hello_ranges/`
+
 Skip this section if you know why release kernels won't let you use restartable ranges that easily.
 
 In this program, we define a dummy restartable range (see `ranges.S`) and try to register it with `task_restartable_ranges_register`.
@@ -25,6 +26,7 @@ Our takeaway is that if we want to use restartable ranges in our own program, we
 
 
 ## `01_dyld/`
+
 Skip this section if you know what the following command does
 ```sh
 cc main.c -Lbuild -lfoo -Wl,-rpath,@executable_path -o main.out
@@ -80,7 +82,7 @@ cc main.c -Lbuild/ -lfoo \
 # `make rpath` for the lazy
 ```
 
-We can inspect the relevant changes with `make inspect`
+We note some relevant information with `make inspect`.
 TODO: elaborate
 
 References
@@ -92,7 +94,48 @@ References
 ---
 
 
+## `02_symbol-interposing`
 
-References
-- https://github.com/DerekSelander/symbol-interposing
-- Jonathan Levin "Mac OS X and iOS Internals" Chapter 4
+Skip this section if you have already read through Derek Selander's excellent writeup on symbol interposing [3].
+
+Check out the `Makefile`. We are merely building a dynamic library `libevilfoo.dylib` and linking `main.c` against it with the `-neededlevilfoo` which tells the linker to record `libevilfoo.dylib` as a dependency even though `main.c` does not import a function from there.
+
+```sh
+make run
+```
+
+
+[3] Derek Selander - Symbol Interposing: <https://github.com/DerekSelander/symbol-interposing>
+[4] Apple OSS Distributions (GitHub) - `dyld-interposing.h`: <https://github.com/apple-oss-distributions/dyld/blob/dyld-1378/include/mach-o/dyld-interposing.h>
+
+
+---
+
+
+## `03_myrange`
+
+In this section, we will finally register our own restartable range using symbol interposing.
+
+Recall that range registration happens before `main` even runs, so this time our `main` function will be as boring as can be
+```c
+int main(void) { return 0; }
+```
+We can also essentially just copy over our scheme from chapter `02` and apply it to `task_restartable_ranges_register` by printing `"Hello interpose!"` before calling `task_restartable_ranges_register` (see `hello_range.c`).
+
+```sh
+make hello
+```
+
+In order to actually register a range, let us copy what we had in chapter `00`'s `main`, but this time put the logic into a dylib we are loading (see `dummy.c:interposed_registration`).
+If what he have gathered so far is right, then we can intercept the function arguments, append our dummy range and call the real function with the extra range.
+
+```sh
+make myrange
+```
+
+Fun fact: It seems like macOS 26 SDK's `libobjc` registered only 5 ranges, whereas whatever macOS 27 uses registers 39 ranges! It seems as though the libobjc devs are putting restartable ranges to good use.
+
+
+---
+
+

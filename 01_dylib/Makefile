@@ -23,11 +23,11 @@ rpath: main.c build/libfoo.dylib
 	$(CC) $(CFLAGS) main.c -Lbuild/ -lfoo -Wl,-rpath,@executable_path -o main.rpath
 	
 
-inspect: object static dynamic rpath 
-	@echo "File kinds:"
-	@file main.c libfoo.o libfoo.a libfoo.dylib main.static
-	@echo "External Symbols (T: defined code, U = unresolved import):"
-	@nm -g -A main.static main.dynamic libfoo.o libfoo.dylib
+inspect: all
+	# @echo "File kinds:"
+	# @file main.c libfoo.o libfoo.a libfoo.dylib main.static
+	@echo "undefined symbols"
+	@nm -mu main.static main.dynamic
 	@echo "dylib deps:"
 	@otool -L main.static main.dynamic main.rpath
 	@echo "Install names:"
@@ -46,8 +46,7 @@ libfoo.dylib: libfoo.c
 
 build/libfoo.dylib: libfoo.c
 	mkdir build/
-	$(CC) -dynamiclib $(CFLAGS) $^ -o $@ \
-		-Wl,-install_name,@rpath/libfoo.dylib
+	$(CC) -dynamiclib $(CFLAGS) $^ -o $@ -Wl,-install_name,@rpath/libfoo.dylib
 
 .PHONY: clean
 clean: 
