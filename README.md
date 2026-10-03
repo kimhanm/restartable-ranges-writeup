@@ -32,10 +32,8 @@ Essentially, the synchronization mechanism (`task_restartable_ranges_synchronize
 
 For the remainder of the writeup, I suggest you clone the directory and follow along the chapters by running the relevant `make` commands in each subdir.
 
-References
 
-
-- [0]: <https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/kern/restartable.c>
+[0]: <https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/kern/restartable.c>
 
 
 ---
@@ -112,7 +110,7 @@ cc main.c -L./ -lfoo -o main.dynamic
 ```
 Note: On Linux, the build artifacts for dynamic libraries are called "shared object files" and have the `.so` suffix (as opposed to `.dylib`)
 
-We aren't fully done yet. For reaons outlined in Quinn's Post on the Apple Developer Forum on "Dynamic Library Identification" [1] (or the developer archive [2]), we should add the location of `libfoo.dylib` to the linker's **runtime path** (**rpath**).
+We aren't fully done yet. For reaons outlined in Quinn's Post on the Apple Developer Forum on "Dynamic Library Identification" [2] (or the developer archive [3]), we should add the location of `libfoo.dylib` to the linker's **runtime path** (**rpath**).
 TODO: elaborate
 
 ```sh
@@ -127,10 +125,8 @@ cc main.c -Lbuild/ -lfoo \
 We note some relevant information with `make inspect`.
 TODO: elaborate
 
-References
-[1] Dynamic Library Identification - Quinn's Post in Developer Forums: <https://developer.apple.com/forums/thread/736719>
-[2] Apple Developer Archive - Dynamic Library Programming Topics - Run-Path Dependent Libraries: <https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/DynamicLibraries/100-Articles/RunpathDependentLibraries.html>
-
+[2] Dynamic Library Identification - Quinn's Post in Developer Forums: <https://developer.apple.com/forums/thread/736719>
+[3] Apple Developer Archive - Dynamic Library Programming Topics - Run-Path Dependent Libraries: <https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/DynamicLibraries/100-Articles/RunpathDependentLibraries.html>
 
 
 ---
@@ -138,7 +134,7 @@ References
 
 ## `02_symbol-interposing`
 
-Skip this section if you have already read through Derek Selander's excellent writeup on symbol interposing [3].
+Skip this section if you have already read through Derek Selander's excellent writeup on symbol interposing [4].
 
 Check out the `Makefile`. We are merely building a dynamic library `libevilfoo.dylib` and linking `main.c` against it with the `-neededlevilfoo` which tells the linker to record `libevilfoo.dylib` as a dependency even though `main.c` does not import a function from there.
 
@@ -146,9 +142,11 @@ Check out the `Makefile`. We are merely building a dynamic library `libevilfoo.d
 make run
 ```
 
+For additional reading, check out [5].
 
-[3] Derek Selander - Symbol Interposing: <https://github.com/DerekSelander/symbol-interposing>
-[4] Apple OSS Distributions (GitHub) - `dyld-interposing.h`: <https://github.com/apple-oss-distributions/dyld/blob/dyld-1378/include/mach-o/dyld-interposing.h>
+
+[4] Derek Selander - Symbol Interposing: <https://github.com/DerekSelander/symbol-interposing>
+[5] Apple OSS Distributions (GitHub) - `dyld-interposing.h`: <https://github.com/apple-oss-distributions/dyld/blob/dyld-1378/include/mach-o/dyld-interposing.h>
 
 
 ---
@@ -205,10 +203,13 @@ Our main thread will spawn the reader, sleep for two seconds and then call `task
 make run # for the lazy
 ```
 
+
 ---
 
 
-TODO:
+## `05_more_interesting_example`
+
+
 
 
 
