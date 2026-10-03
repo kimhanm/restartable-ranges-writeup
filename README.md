@@ -1,6 +1,4 @@
 
-
-
 # Writeup
 This chapter assumes the reader knows what restartable ranges are (in theory). It is concerned with guiding the reader through the process of getting them to work on release kernels.
 

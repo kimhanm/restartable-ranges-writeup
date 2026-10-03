@@ -24,12 +24,14 @@ rpath: main.c build/libfoo.dylib
 	
 
 inspect: object static dynamic rpath 
-	otool -L main.object
-	otool -L main.static
-	otool -L main.dynamic
-	otool -L main.rpath
-	otool -D libfoo.dylib
-	otool -D build/libfoo.dylib
+	@echo "File kinds:"
+	@file main.c libfoo.o libfoo.a libfoo.dylib main.static
+	@echo "External Symbols (T: defined code, U = unresolved import):"
+	@nm -g -A main.static main.dynamic libfoo.o libfoo.dylib
+	@echo "dylib deps:"
+	@otool -L main.static main.dynamic main.rpath
+	@echo "Install names:"
+	@otool -D libfoo.dylib build/libfoo.dylib
 
 # deps
 
@@ -49,4 +51,4 @@ build/libfoo.dylib: libfoo.c
 
 .PHONY: clean
 clean: 
-	rm -f main.direct main.object main.static main.dynamic main.rpath libfoo.o libfoo.dylib libfoo.a build/
+	rm -rf main.direct main.object main.static main.dynamic main.rpath libfoo.o libfoo.dylib libfoo.a build/
