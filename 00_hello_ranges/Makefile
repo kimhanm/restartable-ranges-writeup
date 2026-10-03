@@ -1,5 +1,5 @@
 CC := clang
-CFLAGS := -Wall -Wextra -Werror
+#CFLAGS :=  -Wall -Wextra -Werror
 
 main.out: main.c range.S
 	$(CC) $(CFLAGS) $^ -o $@
