@@ -1,10 +1,47 @@
 
 # Writeup
-This chapter assumes the reader knows what restartable ranges are (in theory). It is concerned with guiding the reader through the process of getting them to work on release kernels.
+This writeup is a tutorial on how to get working with restartable ranges (see [0]) on release kernels. Use at your own risk!
+
+Prerequisites
+- You want to use them and have an idea what they might be good for.
+- Basic multi-threaded programming in C (e.g. `pthread.h`)
+- a tiny bit of assembly (arm64)
+
+## What is a restartable range?
+
+For the purposes of this writeup, we will introduce some terminology that may diverge from what the XNU devs have actually implemented/intended.
+
+1. A **restartable range** consists of
+    - a region of user-space code called its **critical section**, together with
+    - an address in executable memory called its **recovery address**
+2. Registering restartable ranges:
+    - Registration may only occur if the task is single-threaded
+    - On release kernels (not debug or dev), registration may only happen _once_ (this is will be important for later!)
+3. the registered critical sections _must not overlap_!
+4. A thread is said to
+    - be **redirectable** if the user-space program counter (**UPC**) lies within one of the tasks's registered critical sections (_excluding boundary points_)
+    - _have been_ **redirected**, if its UPC is set to the corresponding range's recovery address (which is unique by 3.)
+
+Essentially, the synchronization mechanism (`task_restartable_ranges_synchronize`) redirects every other thread currently in a critical section, with a few caveats:
+
+- If a thread is currently executing, it sets a flag `AST_RESET_PCS` that requests the thread redirect its UPC.
+- If, while accessing memory during a critical section, the thread were to fault, then (despite redirecting the UPC) the kernel could still try to access memory that has possibly been invalidated by a writer (the thread issuing the synchronization request).
+
+5. The synchronization primitive `task_restartable_ranges_synchronize` waits until all requested redirections have been acknowledged and all relevant fault handlers have returned.
+
+
+For the remainder of the writeup, I suggest you clone the directory and follow along the chapters by running the relevant `make` commands in each subdir.
+
+References
+
+
+- [0]: <https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/kern/restartable.c>
+
+
+---
+
 
 ## `00_hello_ranges/`
-
-Skip this section if you know why release kernels won't let you use restartable ranges that easily.
 
 In this program, we define a dummy restartable range (see `ranges.S`) and try to register it with `task_restartable_ranges_register`.
 
@@ -16,10 +53,15 @@ To figure out why, let us start up a debugger, insert a breakpoint at `main` and
 ```sh
 make inspect        # for the lazy
 ```
-Note that even _before_ we enter `main`, the `task_restartable_ranges_register` breakpoint is triggered by `dyld>libSystem>libdispatch>libobjc`
-If we read the source code, we see that release kernels may only register restartable ranges once <https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/kern/restartable.c#L562> in their lifetime.
+Note that even _before_ we enter `main`, the `task_restartable_ranges_register` breakpoint is triggered by `dyld>libSystem>libdispatch>libobjc`..
+If we read the source code, we see that release kernels may only register restartable ranges once in their lifetime [1].
 
 Our takeaway is that if we want to use restartable ranges in our own program, we must somehow take over their registration and append our ranges to that list.
+
+
+References
+
+- [1]: <https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/kern/restartable.c#L562>
 
 
 ---
@@ -57,7 +99,7 @@ Suppose now libfoo were split into many small files `libfoo1.c, libfoo2.c, libfo
 ar rs libfoo.a libfoo.o # libfoo1.o libfoo2.o ...
 cc main.c -L./ -lfoo -o main.static
 ```
-where `-lfoo` asks the compiler to search for `libfoo.a` and `-L./` tells it where to find it (the current working directory).
+where `-lfoo` asks the compiler to search for a library named `libfoo` and `-L./` says where to find it (the current working directory).
 
 Note that if we ever update the library, we must then relink the application.
 
@@ -162,3 +204,11 @@ Our main thread will spawn the reader, sleep for two seconds and then call `task
 ```sh
 make run # for the lazy
 ```
+
+---
+
+
+TODO:
+
+
+
