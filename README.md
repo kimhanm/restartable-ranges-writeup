@@ -139,3 +139,4 @@ Fun fact: It seems like macOS 26 SDK's `libobjc` registered only 5 ranges, where
 ---
 
 
+## `04_first_example`
