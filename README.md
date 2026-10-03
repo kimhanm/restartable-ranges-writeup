@@ -140,3 +140,25 @@ Fun fact: It seems like macOS 26 SDK's `libobjc` registered only 5 ranges, where
 
 
 ## `04_first_example`
+
+This toy example is there to test if the registration really suceeded.
+A "reader" thread will spin in a loop that can only exit if it is redirected.
+
+```asm
+.text
+.globl _myrange_start, _myrange_end, _myrange_recovery
+_myrange_start:
+    nop
+loop:
+    b loop
+_myrange_end:
+_myrange_recovery:
+    ret
+```
+notes: the since synchronization checks that `range.location < PC` (strictly larger), we put a `nop` after the start.
+
+Our main thread will spawn the reader, sleep for two seconds and then call `task_restartable_ranges_synchronize`, which should put the looping thread out of its misery.
+
+```sh
+make run # for the lazy
+```

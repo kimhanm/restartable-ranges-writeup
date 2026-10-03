@@ -1,9 +1,7 @@
 
 .PHONY: all clean
 all: 
-	for dir in */ ; do \
-		$(MAKE) -C $$dir ; \
-	done
+	@echo "nop"
 
 clean:
 	for dir in */ ; do \
